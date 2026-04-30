@@ -1,10 +1,3 @@
-"""
-Extraction – Blue Channel Method
-==================================
-Extrage mesajul ascuns din canalul Blue al imaginii stego
-și restaurează imaginea originală.
-"""
-
 import cv2
 import numpy as np
 
@@ -42,22 +35,6 @@ def _local_pattern(channel, center_row, center_col, ring):
 
 
 def extract(stego_bgr, tc_matrix, n_bits: int, message_length: int):
-    """
-    Extrage mesajul din canalul Blue și restaurează imaginea.
-
-    Parameters
-    ----------
-    stego_bgr      : np.ndarray  – imaginea stego color (BGR)
-    tc_matrix      : np.ndarray  – matricea de modificări
-    n_bits         : int
-    message_length : int         – numărul de biți de extras
-
-    Returns
-    -------
-    text           : str         – mesajul recuperat
-    restored_bgr   : np.ndarray  – imaginea restaurată (BGR)
-    """
-    # Extragem canalele
     stego_blue = stego_bgr[:, :, 0]
     green      = stego_bgr[:, :, 1]
     red        = stego_bgr[:, :, 2]
@@ -104,7 +81,6 @@ def extract(stego_bgr, tc_matrix, n_bits: int, message_length: int):
             for k in range(capacity):
                 extracted_bits.append(h[k] ^ edge_pattern[k])
 
-            # Restaurare canal Blue
             for k, (r, c) in enumerate(edge_positions):
                 sl_val = edge_pattern[k]
                 tc_val = int(tc_matrix[r, c])
@@ -131,7 +107,7 @@ if __name__ == "__main__":
     print("Embedding (Blue Channel) ...")
     stego_bgr, tc, msg_len = embed(test_image, SHORT_MESSAGE, N_BITS)
 
-    print("Extracting (Blue Channel) ...")
+    print("Extracting (Blue Channel)")
     text, restored = extract(stego_bgr, tc, N_BITS, msg_len)
 
     print(f"Recovered message : {text[:80]} ...")

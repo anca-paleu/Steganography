@@ -1,11 +1,3 @@
-"""
-Embedding – Blue Channel Method
-================================
-Imaginea cover este citită ca BGR (color).
-Steganografia se aplică DOAR pe canalul Blue (index 0 în OpenCV BGR).
-Canalele Green și Red rămân nemodificate.
-"""
-
 import cv2
 import numpy as np
 
@@ -13,10 +5,7 @@ from utils import text_to_bits, strip_lsb_image, shuffle
 from config import CANNY_LOW, CANNY_HIGH, SOBEL_THRESH, IMAGE_SIZE
 
 
-# ── Edge detection (identic cu articolul 1, aplicat pe canalul Blue) ──────────
-
 def _build_edge_map(blue_channel):
-    """Construiește harta de muchii pe canalul Blue (grayscale)."""
     edge_canny = cv2.Canny(blue_channel, CANNY_LOW, CANNY_HIGH)
 
     sobel_x = cv2.Sobel(blue_channel, cv2.CV_64F, 1, 0, ksize=3)
@@ -47,28 +36,15 @@ def _local_pattern(channel, center_row, center_col, ring):
     return [1 if channel[r, c] < center_value else 0 for (r, c) in ring]
 
 
-# ── Funcția principală de embedding ──────────────────────────────────────────
 
 def embed(cover_path: str, secret_text: str, n_bits: int):
-    """
-    Citește imaginea color, embeds secretul în canalul Blue.
-
-    Returns
-    -------
-    stego        : np.ndarray  – imaginea color cu mesajul ascuns (BGR)
-    tc           : np.ndarray  – matricea de modificări (pe dimensiunea Blue)
-    message_length : int       – numărul de biți embedați
-    """
-    # Citim color (BGR), resize
     cover_bgr = cv2.imread(cover_path, cv2.IMREAD_COLOR)
     cover_bgr = cv2.resize(cover_bgr, IMAGE_SIZE)
 
-    # Extragem canalele
-    blue  = cover_bgr[:, :, 0].copy()   # B – canalul pe care embedăm
-    green = cover_bgr[:, :, 1].copy()   # G – neatins
-    red   = cover_bgr[:, :, 2].copy()   # R – neatins
+    blue  = cover_bgr[:, :, 0].copy()
+    green = cover_bgr[:, :, 1].copy()
+    red   = cover_bgr[:, :, 2].copy()
 
-    # Pregătire: strip LSB pe canalul Blue pentru edge detection
     smoothed_blue = strip_lsb_image(blue, n_bits)
     edge_map      = _build_edge_map(smoothed_blue)
 
@@ -85,7 +61,6 @@ def embed(cover_path: str, secret_text: str, n_bits: int):
         for j in range(1, cols - 1, 3):
 
             if bit_index >= message_length:
-                # Reconstruim imaginea BGR și returnăm
                 stego_bgr = cv2.merge([stego_blue, green, red])
                 return stego_bgr, tc, message_length
 
@@ -128,8 +103,6 @@ def embed(cover_path: str, secret_text: str, n_bits: int):
     return stego_bgr, tc, message_length
 
 
-# ── Batch embedding (pentru Figure 5 echivalent) ─────────────────────────────
-
 def embed_all_images(cover_dir: str, stego_dir: str, secret_text: str, n_bits: int):
     import os
     import matplotlib.pyplot as plt
@@ -154,7 +127,6 @@ def embed_all_images(cover_dir: str, stego_dir: str, secret_text: str, n_bits: i
         cv2.imwrite(stego_path, stego_bgr)
 
         display_name = filename.split('.')[0].capitalize()
-        # Convertim BGR→RGB pentru matplotlib
         stego_rgb = cv2.cvtColor(stego_bgr, cv2.COLOR_BGR2RGB)
         results.append((display_name, stego_rgb))
 

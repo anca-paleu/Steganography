@@ -1,16 +1,3 @@
-"""
-Results – Blue Channel Method
-===============================
-Generează tabelele de metrici identice cu articolul 1,
-dar pentru embedding pe canalul Blue al imaginilor color.
-
-Diferențe față de articolul 1:
-- Cover și Stego sunt imagini color (BGR)
-- Metricile (PSNR, SSIM, Entropy etc.) se calculează pe canalul Blue
-  (canalul modificat), ceea ce permite comparația directă cu metoda grayscale
-- Se afișează și metricile pe întreaga imagine color (opțional)
-"""
-
 import os
 import cv2
 import numpy as np
@@ -63,15 +50,10 @@ def _render_table(rows, col_headers, title):
     plt.show()
 
 
-# ── Tabel principal de metrici ────────────────────────────────────────────────
 
 def show_metrics_table(cover_dir: str = COVER_DIR,
                        secret_text: str = LONG_MESSAGE,
                        n_bits: int = N_BITS):
-    """
-    Tabel echivalent cu articolul 1.
-    Metricile se calculează pe canalul Blue (singurul canal modificat).
-    """
     images = _load_cover_images(cover_dir)
     if not images:
         print("[!] No images found.")
@@ -85,7 +67,6 @@ def show_metrics_table(cover_dir: str = COVER_DIR,
 
         stego_bgr, tc, msg_len = embed(path, secret_text, n_bits)
 
-        # Extragem canalul Blue din cover și stego pentru metrici
         cover_blue = cover_bgr[:, :, 0]
         stego_blue = stego_bgr[:, :, 0]
 
@@ -109,10 +90,6 @@ def show_metrics_table(cover_dir: str = COVER_DIR,
 def show_metrics_table_full_image(cover_dir: str = COVER_DIR,
                                   secret_text: str = LONG_MESSAGE,
                                   n_bits: int = N_BITS):
-    """
-    Varianta alternativă: metrici calculate pe întreaga imagine color
-    (media pe cele 3 canale), pentru o comparație mai completă.
-    """
     images = _load_cover_images(cover_dir)
     if not images:
         print("[!] No images found.")
@@ -126,7 +103,6 @@ def show_metrics_table_full_image(cover_dir: str = COVER_DIR,
 
         stego_bgr, tc, msg_len = embed(path, secret_text, n_bits)
 
-        # Convertim la grayscale pentru metrici pe imagine întreagă
         cover_gray = cv2.cvtColor(cover_bgr, cv2.COLOR_BGR2GRAY)
         stego_gray = cv2.cvtColor(stego_bgr, cv2.COLOR_BGR2GRAY)
 
@@ -146,8 +122,6 @@ def show_metrics_table_full_image(cover_dir: str = COVER_DIR,
     _render_table(rows, headers,
                   "Performance metrics – Blue Channel Method (full image, grayscale)")
 
-
-# ── Tabel t-Test ──────────────────────────────────────────────────────────────
 
 def show_ttest_table(cover_dir: str = COVER_DIR,
                      secret_text: str = LONG_MESSAGE,

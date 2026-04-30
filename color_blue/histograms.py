@@ -1,9 +1,3 @@
-"""
-Histograms – Blue Channel Method
-===================================
-PDH și histograma de intensitate, calculate pe canalul Blue.
-"""
-
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +7,6 @@ from config import IMAGE_SIZE, N_BITS, MASSIVE_MESSAGE
 
 
 def _compute_pdh(channel):
-    """Pixel Difference Histogram pe un singur canal (2D array)."""
     img_int = channel.astype(np.int16)
     differences = img_int[:, :-1] - img_int[:, 1:]
     frequencies, bin_edges = np.histogram(differences, bins=511, range=(-255, 255))
