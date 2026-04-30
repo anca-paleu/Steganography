@@ -19,33 +19,30 @@ def _ring_coords(center_row, center_col):
     r, c = center_row, center_col
     return [(r-1, c-1), (r-1, c), (r-1, c+1), (r, c+1), (r+1, c+1), (r+1, c), (r+1, c-1), (r, c-1)]
 
-def _local_pattern(image, center_row, center_col, ring):
-    center_value = image[center_row, center_col]
-    return [1 if image[r, c] < center_value else 0 for (r, c) in ring]
+def _local_pattern(image_ref, center_row, center_col, ring):
+    center_value = image_ref[center_row, center_col]
+    return [1 if image_ref[r, c] < center_value else 0 for (r, c) in ring]
 
-def _extract_channel(stego_channel, tc_matrix, n_bits: int, max_bits_to_extract: int):
-    smoothed = strip_lsb_image(stego_channel, n_bits)
-    edge_map = _build_edge_map(smoothed)
+def _extract_channel_with_ref(stego_channel, tc_matrix, ref_y_smooth, edge_map, max_bits: int):
     extracted_bits = []
     restored = stego_channel.copy()
-
     bit_index = 0
-    rows, cols = smoothed.shape
+    rows, cols = ref_y_smooth.shape
 
     for i in range(1, rows - 1, 3):
         for j in range(1, cols - 1, 3):
-            if bit_index >= max_bits_to_extract:
+            if bit_index >= max_bits:
                 return extracted_bits, restored
 
             ring = _ring_coords(i, j)
-            pattern = _local_pattern(smoothed, i, j, ring)
+            pattern = _local_pattern(ref_y_smooth, i, j, ring)
             edge_positions = [(r, c) for (r, c) in ring if edge_map[r, c] == 255]
             edge_pattern = [pattern[k] for k, (r, c) in enumerate(ring) if edge_map[r, c] == 255]
 
             if not edge_positions:
                 continue
 
-            capacity = min(len(edge_positions), max_bits_to_extract - bit_index)
+            capacity = min(len(edge_positions), max_bits - bit_index)
             edge_positions = edge_positions[:capacity]
             edge_pattern = edge_pattern[:capacity]
 
@@ -70,35 +67,38 @@ def _extract_channel(stego_channel, tc_matrix, n_bits: int, max_bits_to_extract:
 
     return extracted_bits, restored
 
-def extract_rgb(stego_image, tc_rgb, n_bits: int, total_message_length: int):
-    b, g, r = cv2.split(stego_image)
-    tc_b, tc_g, tc_r = tc_rgb
-    remaining_length = total_message_length
+def extract_ycbcr(stego_image, tc_ycc, n_bits: int, total_message_length: int):
+    img_ycc = cv2.cvtColor(stego_image, cv2.COLOR_BGR2YCrCb)
+    y, cr, cb = cv2.split(img_ycc)
+    tc_y, tc_cr, tc_cb = tc_ycc
 
-    bits_b, rest_b = _extract_channel(b, tc_b, n_bits, remaining_length)
-    remaining_length -= len(bits_b)
+    y_smooth = strip_lsb_image(y, n_bits)
+    edge_map = _build_edge_map(y_smooth)
 
-    bits_g, rest_g = _extract_channel(g, tc_g, n_bits, remaining_length)
-    remaining_length -= len(bits_g)
+    rem_len = total_message_length
 
-    bits_r, rest_r = _extract_channel(r, tc_r, n_bits, remaining_length)
+    bits_y, rest_y = _extract_channel_with_ref(y, tc_y, y_smooth, edge_map, rem_len)
+    rem_len -= len(bits_y)
 
-    all_bits = bits_b + bits_g + bits_r
-    restored_img = cv2.merge([rest_b, rest_g, rest_r])
+    bits_cr, rest_cr = _extract_channel_with_ref(cr, tc_cr, y_smooth, edge_map, rem_len)
+    rem_len -= len(bits_cr)
 
-    return bits_to_text(all_bits), restored_img
+    bits_cb, rest_cb = _extract_channel_with_ref(cb, tc_cb, y_smooth, edge_map, rem_len)
+
+    all_bits = bits_y + bits_cr + bits_cb
+    restored_ycc = cv2.merge([rest_y, rest_cr, rest_cb])
+    restored_bgr = cv2.cvtColor(restored_ycc, cv2.COLOR_YCrCb2BGR)
+
+    return bits_to_text(all_bits), restored_bgr
 
 if __name__ == "__main__":
     import os
     from config import COVER_DIR, SHORT_MESSAGE, N_BITS
-    from embedding import embed_rgb
+    from embedding import embed_ycbcr
 
     test_image = os.path.join(COVER_DIR, 'lena_color.tiff')
-    print("Embedding RGB ...")
-    stego, tc_rgb, msg_len = embed_rgb(test_image, SHORT_MESSAGE, N_BITS)
+    stego, tc_ycc, msg_len = embed_ycbcr(test_image, SHORT_MESSAGE, N_BITS)
+    text, restored = extract_ycbcr(stego, tc_ycc, N_BITS, msg_len)
 
-    print("Extracting RGB ...")
-    text, restored = extract_rgb(stego, tc_rgb, N_BITS, msg_len)
-
-    print(f"Recovered message : {text[:80]}")
+    print(f"Recovered message : {text[:80]} ...")
     print(f"Recovery success  : {text.strip() == SHORT_MESSAGE.strip()}")

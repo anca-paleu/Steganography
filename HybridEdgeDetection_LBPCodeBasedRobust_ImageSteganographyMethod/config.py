@@ -12,8 +12,8 @@ CANNY_HIGH   = 200
 SOBEL_THRESH = 50
 
 IMAGE_SIZE   = (512, 512)
-discovering
-SHORT_MESSAGE  = "Research is the process of  a new knowledge."
+
+SHORT_MESSAGE  = "Research is the process of discovering a new knowledge."
 
 LONG_MESSAGE   = SHORT_MESSAGE * 70000
 MASSIVE_MESSAGE = "TEXT_SECRET_LICENTA " * 50000
