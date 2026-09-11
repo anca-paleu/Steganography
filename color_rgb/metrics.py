@@ -1,11 +1,13 @@
 import numpy as np
 from skimage.metrics import structural_similarity as _ssim
 
-def embedding_capacity(message_length: int, tc_rgb) -> float:
-    tc_b, tc_g, tc_r = tc_rgb
-    changed_pixels = int(np.sum(tc_b == 1) + np.sum(tc_g == 1) + np.sum(tc_r == 1))
+def embedding_capacity(message_length: int, cover, stego) -> float:
+    # Verificăm diferențele directe dintre imagini la nivel de pixel
+    changed_pixels = np.sum(cover != stego)
+    
     if changed_pixels == 0:
         return 0.0
+        
     return message_length / changed_pixels
 
 def psnr(cover, stego) -> float:

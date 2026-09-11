@@ -1,12 +1,11 @@
 import numpy as np
-from skimage.metrics import structural_similarity as _ssim
+import cv2
 
-
-def embedding_capacity(message_length: int, tc_matrix) -> float:
+def embedding_capacity(embedded_bits: int, tc_matrix) -> float:
     changed_pixels = int(np.sum(tc_matrix == 1))
     if changed_pixels == 0:
         return 0.0
-    return message_length / changed_pixels
+    return embedded_bits / changed_pixels
 
 
 def psnr(cover, stego) -> float:
@@ -18,7 +17,33 @@ def psnr(cover, stego) -> float:
     return 10 * np.log10((255 ** 2) / mse)
 
 def ssim(cover, stego) -> float:
-    return _ssim(cover, stego, data_range=255)
+
+    C1 = (0.01 * 255) ** 2
+    C2 = (0.03 * 255) ** 2
+
+    c = cover.astype(np.float64)
+    s = stego.astype(np.float64)
+
+    kernel = cv2.getGaussianKernel(11, 1.5)
+    window = np.outer(kernel, kernel.transpose())
+
+    mu1 = cv2.filter2D(c, -1, window)[5:-5, 5:-5]
+    mu2 = cv2.filter2D(s, -1, window)[5:-5, 5:-5]
+
+    mu1_sq = mu1 ** 2
+    mu2_sq = mu2 ** 2
+    mu1_mu2 = mu1 * mu2
+
+    sigma1_sq = cv2.filter2D(c ** 2, -1, window)[5:-5, 5:-5] - mu1_sq
+    sigma2_sq = cv2.filter2D(s ** 2, -1, window)[5:-5, 5:-5] - mu2_sq
+    sigma12   = cv2.filter2D(c * s, -1, window)[5:-5, 5:-5] - mu1_mu2
+
+    num = (2 * mu1_mu2 + C1) * (2 * sigma12 + C2)
+    den = (mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2)
+    
+    ssim_map = num / den
+
+    return float(np.mean(ssim_map))
 
 
 def entropy(image) -> float:
@@ -51,4 +76,4 @@ def t_test(cover, stego) -> float:
         return 0.0
 
     mean_d = sum_d / N
-    return float(abs(mean_d / np.sqrt(variance)))
+    return float(abs(mean_d / np.sqrt(variance)) * np.sqrt(N))

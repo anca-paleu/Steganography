@@ -1,13 +1,11 @@
 import numpy as np
 from skimage.metrics import structural_similarity as _ssim
 
-
-def embedding_capacity(message_length: int, tc_matrix) -> float:
-    changed_pixels = int(np.sum(tc_matrix == 1))
+def embedding_capacity(message_length: int, cover, stego) -> float:
+    changed_pixels = np.sum(cover != stego)
     if changed_pixels == 0:
         return 0.0
     return message_length / changed_pixels
-
 
 def psnr(cover, stego) -> float:
     c = cover.astype(np.float64)
@@ -18,8 +16,7 @@ def psnr(cover, stego) -> float:
     return 10 * np.log10((255 ** 2) / mse)
 
 def ssim(cover, stego) -> float:
-    return _ssim(cover, stego, data_range=255)
-
+    return _ssim(cover, stego, data_range=255, channel_axis=-1)
 
 def entropy(image) -> float:
     hist, _ = np.histogram(image.flatten(), bins=256, range=[0, 256])
@@ -39,10 +36,9 @@ def cosine_similarity(cover, stego) -> float:
         return 0.0
     return float(numerator / denominator)
 
-
 def t_test(cover, stego) -> float:
-    D   = cover.astype(np.float64) - stego.astype(np.float64)
-    N   = D.size
+    D = cover.flatten().astype(np.float64) - stego.flatten().astype(np.float64)
+    N = D.size
     sum_d  = np.sum(D)
     sum_d2 = np.sum(D ** 2)
 

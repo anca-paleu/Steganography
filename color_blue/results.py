@@ -70,9 +70,12 @@ def show_metrics_table(cover_dir: str = COVER_DIR,
         cover_blue = cover_bgr[:, :, 0]
         stego_blue = stego_bgr[:, :, 0]
 
+        changed = np.sum(cover_blue != stego_blue)
+        print(f"{display_name}: msg_len={msg_len} bits, changed_pixels={changed}, EC={msg_len/changed:.4f}")
+
         rows.append([
             display_name,
-            f"{m.embedding_capacity(msg_len, tc):.4f}",
+            f"{m.embedding_capacity(msg_len, cover_blue, stego_blue):.4f}",
             f"{m.psnr(cover_blue, stego_blue):.2f}",
             f"{m.ssim(cover_blue, stego_blue):.4f}",
             f"{m.entropy(cover_blue):.4f}",

@@ -58,7 +58,7 @@ def show_metrics_table(cover_dir: str = COVER_DIR, secret_text: str = LONG_MESSA
 
         rows.append([
             display_name,
-            f"{m.embedding_capacity(msg_len, tc_rgb):.4f}",
+            f"{m.embedding_capacity(msg_len,cover, stego):.4f}",
             f"{m.psnr(cover, stego):.2f}",
             f"{m.ssim(cover, stego):.4f}",
             f"{m.entropy(cover):.4f}",

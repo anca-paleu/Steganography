@@ -54,7 +54,7 @@ def embed(cover_path: str, secret_text: str, n_bits: int):
         for j in range(1, cols - 1, 3):
 
             if bit_index >= message_length:
-                return stego, tc, message_length
+                return stego, tc, bit_index
 
             ring    = _ring_coords(i, j)
             pattern = _local_pattern(smoothed, i, j, ring)
@@ -90,7 +90,7 @@ def embed(cover_path: str, secret_text: str, n_bits: int):
 
             bit_index += capacity
 
-    return stego, tc, message_length
+    return stego, tc, bit_index
 
 def embed_all_images(cover_dir: str, stego_dir: str, secret_text: str, n_bits: int):
     import os
