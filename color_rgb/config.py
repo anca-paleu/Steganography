@@ -5,7 +5,6 @@ COVER_DIR = os.path.join(BASE_DIR, 'cover_images')
 STEGO_DIR = os.path.join(BASE_DIR, 'stego_images_rgb')
 
 N_BITS       = 2
-EMBED_SEED   = 42
 
 CANNY_LOW    = 100
 CANNY_HIGH   = 200

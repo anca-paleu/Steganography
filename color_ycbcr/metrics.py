@@ -1,9 +1,9 @@
 import numpy as np
 from skimage.metrics import structural_similarity as _ssim
 
-def embedding_capacity(message_length: int, tc_rgb) -> float:
-    tc_b, tc_g, tc_r = tc_rgb
-    changed_pixels = int(np.sum(tc_b == 1) + np.sum(tc_g == 1) + np.sum(tc_r == 1))
+def embedding_capacity(message_length: int, tc_ycc) -> float:
+    tc_y, tc_cr, tc_cb = tc_ycc
+    changed_pixels = int(np.sum(tc_y == 1) + np.sum(tc_cr == 1) + np.sum(tc_cb == 1))
     if changed_pixels == 0:
         return 0.0
     return message_length / changed_pixels
@@ -48,4 +48,4 @@ def t_test(cover, stego) -> float:
         return 0.0
 
     mean_d = sum_d / N
-    return float(abs(mean_d / np.sqrt(variance)))
+    return float(abs(mean_d / np.sqrt(variance)) * np.sqrt(N))

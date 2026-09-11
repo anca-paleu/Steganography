@@ -2,7 +2,9 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 
-from embedding import embed_ycbcr 
+from embedding import embed_ycbcr
+from extraction import extract_ycbcr
+from utils import text_to_bits, bits_to_text
 import metrics as m
 from config import COVER_DIR, N_BITS, LONG_MESSAGE, IMAGE_NAME_MAP
 
@@ -42,6 +44,12 @@ def show_metrics_table(cover_dir: str = COVER_DIR, secret_text: str = LONG_MESSA
     for filename, display_name, cover, path in images:
         print(f"  Processing {display_name} ...")
         stego, tc_ycc, msg_len = embed_ycbcr(path, secret_text, n_bits)
+        extracted_text, _ = extract_ycbcr(stego, tc_ycc, n_bits, msg_len)
+
+        expected_bits = text_to_bits(secret_text)[:msg_len]
+        expected_text = bits_to_text(expected_bits)
+        text_match = (extracted_text == expected_text)
+
         rows.append([
             display_name,
             f"{m.embedding_capacity(msg_len, tc_ycc):.4f}",
@@ -51,8 +59,10 @@ def show_metrics_table(cover_dir: str = COVER_DIR, secret_text: str = LONG_MESSA
             f"{m.entropy(stego):.4f}",
             f"{m.correlation(cover, stego):.6f}",
             f"{m.cosine_similarity(cover, stego):.6f}",
+            "OK" if text_match else "FAIL",
         ])
-    _render_table(rows, ["Image", "EC", "PSNR (dB)", "SSIM", "Entropy C", "Entropy S", "Correlation", "Cosine Sim."], "Performance metrics (YCbCr)")
+    _render_table(rows, ["Image", "EC", "PSNR (dB)", "SSIM", "Entropy C", "Entropy S",
+                          "Correlation", "Cosine Sim.", "Text Match"], "Performance metrics (YCbCr)")
 
 def show_ttest_table(cover_dir: str = COVER_DIR, secret_text: str = LONG_MESSAGE, n_bits: int = N_BITS):
     images = _load_cover_images(cover_dir)
