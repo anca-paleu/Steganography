@@ -3,6 +3,8 @@ import cv2
 import matplotlib.pyplot as plt
 
 from embedding import embed_rgb
+from extraction_corrected import extract_rgb_corrected
+from utils import text_to_bits, bits_to_text
 import metrics as m
 from config import COVER_DIR, N_BITS, LONG_MESSAGE, IMAGE_NAME_MAP
 
@@ -55,19 +57,26 @@ def show_metrics_table(cover_dir: str = COVER_DIR, secret_text: str = LONG_MESSA
     for filename, display_name, cover, path in images:
         print(f"  Processing {display_name} ...")
         stego, tc_rgb, msg_len = embed_rgb(path, secret_text, n_bits)
+        extracted_text, _ = extract_rgb_corrected(stego, tc_rgb, n_bits, msg_len)
+
+        expected_bits = text_to_bits(secret_text)[:msg_len]
+        expected_text = bits_to_text(expected_bits)
+        text_match = (extracted_text == expected_text)
 
         rows.append([
             display_name,
-            f"{m.embedding_capacity(msg_len,cover, stego):.4f}",
+            f"{m.embedding_capacity(msg_len, cover, stego):.4f}",
             f"{m.psnr(cover, stego):.2f}",
             f"{m.ssim(cover, stego):.4f}",
             f"{m.entropy(cover):.4f}",
             f"{m.entropy(stego):.4f}",
             f"{m.correlation(cover, stego):.6f}",
             f"{m.cosine_similarity(cover, stego):.6f}",
+            "OK" if text_match else "FAIL",
         ])
 
-    headers = ["Image", "EC", "PSNR (dB)", "SSIM", "Entropy C", "Entropy S", "Correlation", "Cosine Sim."]
+    headers = ["Image", "EC", "PSNR (dB)", "SSIM", "Entropy C", "Entropy S",
+               "Correlation", "Cosine Sim.", "Text Match"]
     _render_table(rows, headers, "Performance metrics (RGB Channels)")
 
 def show_ttest_table(cover_dir: str = COVER_DIR, secret_text: str = LONG_MESSAGE, n_bits: int = N_BITS):

@@ -47,4 +47,4 @@ def t_test(cover, stego) -> float:
         return 0.0
 
     mean_d = sum_d / N
-    return float(abs(mean_d / np.sqrt(variance)))
+    return float(abs(mean_d / np.sqrt(variance)) * np.sqrt(N))

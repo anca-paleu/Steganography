@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from embedding import embed
+from extraction import extract
+from utils import text_to_bits, bits_to_text
 import metrics as m
 from config import COVER_DIR, N_BITS, LONG_MESSAGE, IMAGE_NAME_MAP
 
@@ -50,7 +52,6 @@ def _render_table(rows, col_headers, title):
     plt.show()
 
 
-
 def show_metrics_table(cover_dir: str = COVER_DIR,
                        secret_text: str = LONG_MESSAGE,
                        n_bits: int = N_BITS):
@@ -66,12 +67,14 @@ def show_metrics_table(cover_dir: str = COVER_DIR,
         print(f"  Processing {display_name} ...")
 
         stego_bgr, tc, msg_len = embed(path, secret_text, n_bits)
+        extracted_text, _ = extract(stego_bgr, tc, n_bits, msg_len)
+
+        expected_bits = text_to_bits(secret_text)[:msg_len]
+        expected_text = bits_to_text(expected_bits)
+        text_match = (extracted_text == expected_text)
 
         cover_blue = cover_bgr[:, :, 0]
         stego_blue = stego_bgr[:, :, 0]
-
-        changed = np.sum(cover_blue != stego_blue)
-        print(f"{display_name}: msg_len={msg_len} bits, changed_pixels={changed}, EC={msg_len/changed:.4f}")
 
         rows.append([
             display_name,
@@ -82,10 +85,11 @@ def show_metrics_table(cover_dir: str = COVER_DIR,
             f"{m.entropy(stego_blue):.4f}",
             f"{m.correlation(cover_blue, stego_blue):.6f}",
             f"{m.cosine_similarity(cover_blue, stego_blue):.6f}",
+            "OK" if text_match else "FAIL",
         ])
 
     headers = ["Image", "EC", "PSNR (dB)", "SSIM",
-               "Entropy C", "Entropy S", "Correlation", "Cosine Sim."]
+               "Entropy C", "Entropy S", "Correlation", "Cosine Sim.", "Text Match"]
     _render_table(rows, headers,
                   "Performance metrics – Blue Channel Method (metrics on Blue channel)")
 
@@ -106,24 +110,24 @@ def show_metrics_table_full_image(cover_dir: str = COVER_DIR,
 
         stego_bgr, tc, msg_len = embed(path, secret_text, n_bits)
 
-        cover_gray = cv2.cvtColor(cover_bgr, cv2.COLOR_BGR2GRAY)
-        stego_gray = cv2.cvtColor(stego_bgr, cv2.COLOR_BGR2GRAY)
+        cover_blue = cover_bgr[:, :, 0]
+        stego_blue = stego_bgr[:, :, 0]
 
         rows.append([
             display_name,
-            f"{m.embedding_capacity(msg_len, tc):.4f}",
-            f"{m.psnr(cover_gray, stego_gray):.2f}",
-            f"{m.ssim(cover_gray, stego_gray):.4f}",
-            f"{m.entropy(cover_gray):.4f}",
-            f"{m.entropy(stego_gray):.4f}",
-            f"{m.correlation(cover_gray, stego_gray):.6f}",
-            f"{m.cosine_similarity(cover_gray, stego_gray):.6f}",
+            f"{m.embedding_capacity(msg_len, cover_blue, stego_blue):.4f}",
+            f"{m.psnr(cover_bgr, stego_bgr):.2f}",
+            f"{m.ssim(cover_bgr, stego_bgr):.4f}",
+            f"{m.entropy(cover_bgr):.4f}",
+            f"{m.entropy(stego_bgr):.4f}",
+            f"{m.correlation(cover_bgr, stego_bgr):.6f}",
+            f"{m.cosine_similarity(cover_bgr, stego_bgr):.6f}",
         ])
 
     headers = ["Image", "EC", "PSNR (dB)", "SSIM",
                "Entropy C", "Entropy S", "Correlation", "Cosine Sim."]
     _render_table(rows, headers,
-                  "Performance metrics – Blue Channel Method (full image, grayscale)")
+                  "Performance metrics – Blue Channel Method (full color image)")
 
 
 def show_ttest_table(cover_dir: str = COVER_DIR,
@@ -154,7 +158,7 @@ if __name__ == "__main__":
     print("=== Metrics table (Blue channel only) ===")
     show_metrics_table()
 
-    print("\n=== Metrics table (full image) ===")
+    print("\n=== Metrics table (full color image) ===")
     show_metrics_table_full_image()
 
     print("\n=== t-Test table ===")
