@@ -62,7 +62,7 @@ def embed(cover_path: str, secret_text: str, n_bits: int):
 
             if bit_index >= message_length:
                 stego_bgr = cv2.merge([stego_blue, green, red])
-                return stego_bgr, tc, message_length
+                return stego_bgr, tc, bit_index
 
             ring    = _ring_coords(i, j)
             pattern = _local_pattern(smoothed_blue, i, j, ring)
@@ -100,7 +100,7 @@ def embed(cover_path: str, secret_text: str, n_bits: int):
             bit_index += capacity
 
     stego_bgr = cv2.merge([stego_blue, green, red])
-    return stego_bgr, tc, message_length
+    return stego_bgr, tc, bit_index
 
 
 def embed_all_images(cover_dir: str, stego_dir: str, secret_text: str, n_bits: int):

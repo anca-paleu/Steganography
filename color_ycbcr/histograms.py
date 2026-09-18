@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-from embedding import embed_rgb
+from embedding import embed_ycbcr
 from config import IMAGE_SIZE, N_BITS, MASSIVE_MESSAGE
 
 def _compute_pdh(image):
@@ -13,10 +13,10 @@ def _compute_pdh(image):
     return frequencies, bin_edges[:-1]
 
 def plot_pdh(cover_path: str, image_name: str, secret_text: str = MASSIVE_MESSAGE, n_bits: int = N_BITS):
-    print(f"[PDH] Computing RGB for {image_name} ...")
+    print(f"[PDH] Computing YCbCr for {image_name} ...")
     cover = cv2.imread(cover_path, cv2.IMREAD_COLOR)
     cover = cv2.resize(cover, IMAGE_SIZE)
-    stego, _, _ = embed_rgb(cover_path, secret_text, n_bits)
+    stego, _, _ = embed_ycbcr(cover_path, secret_text, n_bits)
 
     freq_cover, bins_cover = _compute_pdh(cover)
     freq_stego, bins_stego = _compute_pdh(stego)
@@ -32,7 +32,7 @@ def plot_pdh(cover_path: str, image_name: str, secret_text: str = MASSIVE_MESSAG
     plt.plot(bins_stego, freq_stego, linestyle='-', color='black', linewidth=0.8,
              marker='o', markerfacecolor='none', markersize=5, markevery=marker_indices, label=f'Stego {image_name}')
 
-    plt.title(f'Pixel Difference Histogram (PDH) RGB — {image_name}', fontsize=14, fontweight='bold')
+    plt.title(f'Pixel Difference Histogram (PDH) YCbCr — {image_name}', fontsize=14, fontweight='bold')
     plt.xlabel('Pixel difference', fontsize=12, fontweight='bold')
     plt.ylabel('Frequency of occurrence', fontsize=12, fontweight='bold')
     plt.xlim([-600, 600])
@@ -42,16 +42,16 @@ def plot_pdh(cover_path: str, image_name: str, secret_text: str = MASSIVE_MESSAG
     plt.show(block=True)
 
 def plot_intensity_histogram(cover_path: str, image_name: str, secret_text: str = MASSIVE_MESSAGE, n_bits: int = N_BITS):
-    print(f"[Intensity] Computing RGB for {image_name} ...")
+    print(f"[Intensity] Computing YCbCr for {image_name} ...")
     cover = cv2.imread(cover_path, cv2.IMREAD_COLOR)
     cover = cv2.resize(cover, IMAGE_SIZE)
-    stego, _, _ = embed_rgb(cover_path, secret_text, n_bits)
+    stego, _, _ = embed_ycbcr(cover_path, secret_text, n_bits)
 
     plt.figure(figsize=(10, 6))
     plt.hist(cover.flatten(), bins=256, range=[0, 256], color='blue', alpha=0.6, density=True, label=f'Cover Image {image_name}')
     plt.hist(stego.flatten(), bins=256, range=[0, 256], color='red', alpha=0.6, density=True, label=f'Stego Image {image_name}')
 
-    plt.title('Histogram of Pixel Intensities (RGB)', fontsize=14, fontweight='bold')
+    plt.title('Histogram of Pixel Intensities (YCbCr)', fontsize=14, fontweight='bold')
     plt.xlabel('Pixel Intensity', fontsize=12)
     plt.ylabel('Frequency', fontsize=12)
     plt.xlim([0, 255])

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from utils import text_to_bits, strip_lsb_image, shuffle
-from config import CANNY_LOW, CANNY_HIGH, SOBEL_THRESH, IMAGE_SIZE, EMBED_SEED
+from config import CANNY_LOW, CANNY_HIGH, SOBEL_THRESH, IMAGE_SIZE
 
 def _build_edge_map(image):
     edge_canny = cv2.Canny(image, CANNY_LOW, CANNY_HIGH)
